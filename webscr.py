@@ -43,5 +43,4 @@ for index, row in x.iterrows():
     
     input("\033[31m\tPress Enter to continue...\033[0m") #https://stackoverflow.com/questions/66206815/how-to-change-the-ouput-color-in-the-terminal-of-visual-code
 
-
     
