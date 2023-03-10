@@ -33,7 +33,6 @@ for index, row in x.iterrows():
     lsrch = list(srch)
     
     citac = 0
-        
     for url in lsrch:
         print("\t" + url)
         citac += 1
@@ -48,17 +47,14 @@ for index, row in x.iterrows():
             webbrowser.open(url)            
             urls.append(url)
             
-            input("\t\tZdá se že je to daný zdroj?\t") == 1:
+            if input("\t\tZdá se že je to daný zdroj?\t") == 1:
                 nazev += "&&&"
             
             cesta = Path("./downloaded/" + query + "_@_" + nazev + ".pdf")
             response = requests.get(url)
             cesta.write_bytes(response.content)
-
     
-    print("\tČekám na stisk klávesy abych mohl hledat další...")
-    
-    input("\033[31m\tPress Enter to continue...\033[0m") #https://stackoverflow.com/questions/66206815/how-to-change-the-ouput-color-in-the-terminal-of-visual-code
+    input("\033[31m\tČekám na stisk klávesy abych mohl hledat další...\033[0m") #https://stackoverflow.com/questions/66206815/how-to-change-the-ouput-color-in-the-terminal-of-visual-code
 
 
 # https://pypi.org/project/websearch-python/
