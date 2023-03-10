@@ -12,6 +12,8 @@ x = xx.iloc[0:5]
 
 urls = []
 
+lsrch = ['https://loschmidt.chemi.muni.cz/peg/wp-content/uploads/2013/01/chemlisty2010.pdf', 'https://dspace.cvut.cz/bitstream/handle/10467/75175/FBMI-DP-2016-Vobecka-Katerina-prace.pdf?sequence=-1&isAllowed=y', 'https://dspace.cvut.cz/bitstream/handle/10467/91403/FBMI-DP-2020-Vesela-Katerina-prace.pdf?sequence=-1&isAllowed=y', 'https://dk.upce.cz/bitstream/handle/10195/46323/Chladkova_Vyuziti%20Biosensoru_SS_2012.pdf?sequence=3&isAllowed=y', 'https://dk.upce.cz/bitstream/handle/10195/68479/PorizkovaP_Priprava_cholinesterazoveho_MP_2017.pdf?sequence=1&isAllowed=y', 'https://www.researchgate.net/profile/Pavla_Martinkova4/publication/323869415_Stanoveni_glykemie_pomoci_biosenzoru_soucasny_stav_a_trendy_ve_vyzkumu/links/5ab0c8f10f7e9b4897c237d9/Stanoveni-glykemie-pomoci-biosenzoru-soucasny-stav-a-trendy-ve-vyzkumu.pdf', 'https://theses.cz/id/owjtyx/16321490', 'https://core.ac.uk/download/pdf/161964838.pdf', 'http://chemicke-listy.cz/Bulletin/bulletin413/bulletin413.pdf', 'https://dspace.cuni.cz/bitstream/handle/20.500.11956/47744/150007322.pdf?sequence=1&isAllowed=y']
+
 for index, row in x.iterrows():
     aut = str(row['Author']).replace(".", "")
     b = []
@@ -25,18 +27,30 @@ for index, row in x.iterrows():
     ttl = str(row["Title"]).replace("[online", "")
     
     query = str(b) + " " + ttl + " pdf"
-    print(query)
+    print("\033[34m" + query + "\033[0m")
+    
     srch = search(query, tld="co.in", num=10, stop=10, pause=2)
-    print([srch])
+    lsrch = list(srch)
+    
+    citac = 0
         
-    for url in srch:
-        print(url)
+    for url in lsrch:
+        print("\t" + url)
+        citac += 1
         if ".pdf" in str(url):
-            webbrowser.open(url)
-            
-            urls.append(url)
+            if input("\t\tJe to vážně pdf?\t") == 0: 
+                break
             
             nazev = url.split("/")[-1].split(".pdf")[0].replace("%", "")
+            if input("\t\tJe validní: " + nazev + "?\t") == 0:
+                nazev = str(b) + " " + ttl + " " + citac
+            
+            webbrowser.open(url)            
+            urls.append(url)
+            
+            input("\t\tZdá se že je to daný zdroj?\t") == 1:
+                nazev += "&&&"
+            
             cesta = Path("./downloaded/" + query + "_@_" + nazev + ".pdf")
             response = requests.get(url)
             cesta.write_bytes(response.content)
@@ -46,6 +60,9 @@ for index, row in x.iterrows():
     
     input("\033[31m\tPress Enter to continue...\033[0m") #https://stackoverflow.com/questions/66206815/how-to-change-the-ouput-color-in-the-terminal-of-visual-code
 
-query = "Geeksforgeeks"
 
 # https://pypi.org/project/websearch-python/
+
+
+
+#['https://loschmidt.chemi.muni.cz/peg/wp-content/uploads/2013/01/chemlisty2010.pdf', 'https://dspace.cvut.cz/bitstream/handle/10467/75175/FBMI-DP-2016-Vobecka-Katerina-prace.pdf?sequence=-1&isAllowed=y', 'https://dspace.cvut.cz/bitstream/handle/10467/91403/FBMI-DP-2020-Vesela-Katerina-prace.pdf?sequence=-1&isAllowed=y', 'https://dk.upce.cz/bitstream/handle/10195/46323/Chladkova_Vyuziti%20Biosensoru_SS_2012.pdf?sequence=3&isAllowed=y', 'https://dk.upce.cz/bitstream/handle/10195/68479/PorizkovaP_Priprava_cholinesterazoveho_MP_2017.pdf?sequence=1&isAllowed=y', 'https://www.researchgate.net/profile/Pavla_Martinkova4/publication/323869415_Stanoveni_glykemie_pomoci_biosenzoru_soucasny_stav_a_trendy_ve_vyzkumu/links/5ab0c8f10f7e9b4897c237d9/Stanoveni-glykemie-pomoci-biosenzoru-soucasny-stav-a-trendy-ve-vyzkumu.pdf', 'https://theses.cz/id/owjtyx/16321490', 'https://core.ac.uk/download/pdf/161964838.pdf', 'http://chemicke-listy.cz/Bulletin/bulletin413/bulletin413.pdf', 'https://dspace.cuni.cz/bitstream/handle/20.500.11956/47744/150007322.pdf?sequence=1&isAllowed=y']
