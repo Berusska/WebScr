@@ -1,13 +1,14 @@
-from googlesearch import search
+from googlesearch  import search #https://www.geeksforgeeks.org/performing-google-search-using-python-code/
 import pandas
 from pathlib import Path
 import webbrowser
 import requests
+import openpyxl
+import time
 
-
-xx = pandas.read_excel("../css/uniqZdr.xlsx")
+xx = pandas.read_excel("./uniqZdr.xlsx")
 xx = xx.reset_index()
-x = xx.iloc[1:5]
+x = xx.iloc[0:5]
 
 urls = []
 
@@ -19,15 +20,17 @@ for index, row in x.iterrows():
     else:
         auts = list(aut)
         
-    for each in auts: b.extend(max(each.split(","), key = len))
+    b = max([each.split(",") for each in auts][0], key = len)
     
     ttl = str(row["Title"]).replace("[online", "")
     
-    query = str(b[0]).split(" ")[0] + " " + ttl + " pdf"
-    
-    srch = search(query, tld="co.in", num=3, stop = 3, pause=2)
+    query = str(b) + " " + ttl + " pdf"
+    print(query)
+    srch = search(query, tld="co.in", num=10, stop=10, pause=2)
+    print([srch])
         
     for url in srch:
+        print(url)
         if ".pdf" in str(url):
             webbrowser.open(url)
             
@@ -38,9 +41,11 @@ for index, row in x.iterrows():
             response = requests.get(url)
             cesta.write_bytes(response.content)
 
-    print(query)
+    
     print("\tČekám na stisk klávesy abych mohl hledat další...")
     
     input("\033[31m\tPress Enter to continue...\033[0m") #https://stackoverflow.com/questions/66206815/how-to-change-the-ouput-color-in-the-terminal-of-visual-code
 
-    
+query = "Geeksforgeeks"
+
+# https://pypi.org/project/websearch-python/
