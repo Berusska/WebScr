@@ -15,6 +15,7 @@ import pyperclip as pc
 import PySimpleGUI as sg
 from itertools import chain
 import pyautogui
+import keyboard
 
 
 
@@ -29,7 +30,7 @@ import pyautogui
 #     input_text_color ='Black',
 #     button_color = ('Black', 'gainsboro'))
 
-od, do = input("Zadejte rozsah řádků oddělený pomlčkou: ").split("-")
+# od, do = input("Zadejte rozsah řádků oddělený pomlčkou: ").split("-")
 od, do = 1, 2
 
 dfIn = pandas.read_excel("./uniqZdr.xlsx").reset_index().iloc[int(od)-1:int(do)]
@@ -70,16 +71,19 @@ for index, radek in dfIn.iterrows():
         schranka = pc.paste()
         
         if indikace_schranky == 0:
+            klavesa = keyboard.read_key()
+            if klavesa == "f6": 
+                pyautogui.hotkey('ctrl', 'c')    
             if predtim != schranka:
-                predtim = schranka
-                indikace_schranky = 1 
-                
                 pyautogui.hotkey('ctrl', 's')#takže by mělo stačit jen zkopírovat F6; Ctrl + C 
-                pyautogui.click(0, 200) # stahovací okno musí mít určitou pozici
+                pyautogui.click(100, 200) # stahovací okno musí mít určitou pozici
                 pyautogui.hotkey("enter") #na zavření dialogi stahování
                 pyautogui.hotkey('ctrl', 'w') 
-                # pyautogui.hotkey("enter") #na zavření tabu
-                # pyautogui.hotkey('ctrl', 'w') 
+                pyautogui.hotkey("enter") #na zavření tabu
+                pyautogui.hotkey('ctrl', 'w') 
+                predtim = schranka
+                indikace_schranky = 1 
+
         elif indikace_schranky == 1:
             veSlozce_actual = set(sorted(primSlozka.glob("*.pdf")))
             newFile = veSlozce.symmetric_difference(veSlozce_actual)
@@ -131,7 +135,7 @@ for index, radek in dfIn.iterrows():
     indikace_schranky = 0
 
 dfOut.to_csv("./PruberStahovani.csv")
-
+print("Legitimní konec")
 
 #https://stackoverflow.com/questions/52675506/get-chrome-tab-url-in-python
 
