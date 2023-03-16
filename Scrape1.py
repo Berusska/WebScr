@@ -56,12 +56,11 @@ for index, radek in dfIn.iterrows():
         
     pocitac = 0
     match = 0
-    # predtim = pc.paste() #TODO: nefunguje mi to s tím porovnáváním, resp neotevírá se mi ani okno a tudíž to pak nezná 
-    event = "" #FIXME: nepomohlo
+    # predtim = pc.paste() 
     lsrch = []
     indikace_schranky = 0
     
-    while True: #nyní stále kontroluj, uživatel vyhledává a stahuje ... #TODO: já nevím jak se to bude chovat - protože: jakmile bude ve schránce nová polozka, musí to čekat než bude nová položka i ve složce, až pak může vyskožit okno a PŘEJMENOVAT SE TO 
+    while True: #nyní stále kontroluj, uživatel vyhledává a stahuje ... 
         schranka = pc.paste()
         
         if indikace_schranky == 0:
@@ -72,40 +71,35 @@ for index, radek in dfIn.iterrows():
             veSlozce_actual = set(sorted(primSlozka.glob("*.pdf")))
             newFile = veSlozce.symmetric_difference(veSlozce_actual)
             if len(newFile) != 0:
-                nazevFile = list(newFile)[0].name
+                cestaFile = list(newFile)[0]
             
-                layout = [[sg.Text(f"Ve schránce nová url adresa a zároveň se objevil nový PDF soubor v primární složce.\n\tNový soubor: {nazevFile}\n\n\tAktuální schránka: {schranka}\n")],[sg.Button('Další zajimavý zdroj', pad=((20,15),3)), sg.Button('Daný zdroj', pad=((20,15),3)), sg.Button("Dej další zdroj", pad=((20,15),3), button_color="red")]]
+                layout = [[sg.Text(f"Ve schránce nová url adresa a zároveň se objevil nový PDF soubor v primární složce.\n\tNový soubor: {cestaFile.name}\n\n\tAktuální schránka: {schranka}\n")],[sg.Button('Jiný zajimavý zdroj', pad=((20,15),3)), sg.Button('Daný zdroj', pad=((20,15),3)), sg.Button("Dej další zdroj", pad=((20,15),3), button_color="red")]]
                 
                 event, other = sg.Window('Stahování zdrojů pd DP', layout, keep_on_top=True).read(close=True) 
                 
-                if event == "":
-                    pass
-                elif event == "Dej další zdroj":
+                if event == "Dej další zdroj" or "":
                     break 
-                elif event == "Další zajimavý zdroj":
-                    nazev = query.replace(" pdf", "") + nazev + str(pocitac)
+                elif event == "Další zajimavý zdroj":                    
                     pocitac += pocitac
+                    indikatorValidity = f"{pocitac} "
                 elif event == "Daný zdroj":
-                    nazev += "&&&"
+                    pocitac += pocitac
+                    indikatorValidity += f"{pocitac} &&&_"
                     match += 1
-                elif event == "Nevalidní daný zdroj":
-                    nazev = query.replace(" pdf", "") + str(pocitac) + "&&&"
                 
-                if event in ["Dej další zdroj", "Pouze validní", "Daný zdroj"]:      
+                if event in ["Jiný zajímavý zdroj", "Daný zdroj"]:      
                     urls.append(schranka)
                     
-                    #TODO: přesun a přejmenování
+                    cestaFile.rename(str(sekSlozka.absolute()) + "/" + query.replace(" pdf", indikatorValidity) + cestaFile.name)
                     
                     lsrch.append(schranka)
-        else: pass
 
-        
 
     
     dfOut.loc[len(dfOut)] = [radek["Title"], radek['Author'], ttl, Auth, query, lsrch, match]
     indikace_schranky = 0
     
-    input("\033[31m\tČekám na stisk klávesy abych mohl hledat další...\033[0m") 
+    input("\033[31m\tČekám na stisk klávesy abych mohl hledat další položku ve zdrojích...\033[0m") 
 
 
 
