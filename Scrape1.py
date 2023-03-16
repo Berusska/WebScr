@@ -14,6 +14,9 @@ import pywhatkit as kt
 import pyperclip as pc
 import PySimpleGUI as sg
 from itertools import chain
+import pyautogui
+
+
 
 
 # background = '#F0F0F0'
@@ -69,14 +72,21 @@ for index, radek in dfIn.iterrows():
         if indikace_schranky == 0:
             if predtim != schranka:
                 predtim = schranka
-                indikace_schranky = 1   
+                indikace_schranky = 1 
+                
+                pyautogui.hotkey('ctrl', 's')#takže by mělo stačit jen zkopírovat F6; Ctrl + C 
+                pyautogui.click(0, 200) # stahovací okno musí mít určitou pozici
+                pyautogui.hotkey("enter") #na zavření dialogi stahování
+                pyautogui.hotkey('ctrl', 'w') 
+                # pyautogui.hotkey("enter") #na zavření tabu
+                # pyautogui.hotkey('ctrl', 'w') 
         elif indikace_schranky == 1:
             veSlozce_actual = set(sorted(primSlozka.glob("*.pdf")))
             newFile = veSlozce.symmetric_difference(veSlozce_actual)
             if len(newFile) != 0:
                 cestaFile = list(newFile)[0]
             
-                layout = [[sg.Text(f"Ve schránce nová url adresa a zároveň se objevil nový PDF soubor v primární složce.\n\tAktuální požadavek: {query}\n\n\tNový soubor: {cestaFile.name}\n\n\tAktuální schránka: {schranka}\n")],[[sg.Button('Jiný zajimavý zdroj', pad=((20,20),20)), sg.Button('Daný zdroj', pad=((20,20),20)), sg.Button("Daný zdroj\nDej další zdroj", pad=((20,20),20),button_color="red"), sg.Button("Jiný zajímavý zdroj\nDej další zdroj", pad=((20,20),20), button_color="purple")]]]
+                layout = [[sg.Text(f"Ve schránce nová url adresa a zároveň se objevil nový PDF soubor v primární složce.\n\tAktuální požadavek: {query}\n\n\tNový soubor: {cestaFile.name}\n\n\tAktuální schránka: {schranka}\n")],[[sg.Button('Jiný zajimavý zdroj', size = (15, 2), pad=((15,20),20)), sg.Button('Daný zdroj', size = (15, 2), pad=((15,20),20)), sg.Button("Daný zdroj\nDej další zdroj", size = (15, 2), pad=((15,20),20),button_color="red"), sg.Button("Jiný zajímavý zdroj\nDej další zdroj", size = (15, 2), pad=((15,20),20), button_color="purple")]]]
                 
                 # schranka = pc.paste() #joko možnost opravy v průběhu
                 
@@ -102,11 +112,14 @@ for index, radek in dfIn.iterrows():
                 if event != None:      
                     urls.append(schranka)
                     
-                    cestaFile.rename(str(sekSlozka.absolute()) + "/" + query.replace(" pdf", indikatorValidity) + cestaFile.name)
-                    print("\tSoubor přesunut.")
+                    try:
+                        cestaFile.rename(str(sekSlozka.absolute()) + "/" + query.replace(" pdf", indikatorValidity) + cestaFile.name)
+                        print("\tSoubor přesunut.")
+                        lsrch.append(schranka)
+                    except:
+                        FileExistsError
                     
-                    lsrch.append(schranka)
-                    
+                                        
                 if event == "Daný zdroj\nDej další zdroj" or event == "Jiný zajímavý zdroj\nDej další zdroj":
                     print("\tPřistupuji k dalšímu zdroji")
                     break
@@ -121,3 +134,4 @@ dfOut.to_csv("./PruberStahovani.csv")
 
 
 #https://stackoverflow.com/questions/52675506/get-chrome-tab-url-in-python
+
