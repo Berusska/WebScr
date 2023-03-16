@@ -10,10 +10,11 @@
 
 import pandas
 from pathlib import Path
-import requests
 import pywhatkit as kt
 import pyperclip as pc
 import PySimpleGUI as sg
+from itertools import chain
+
 
 # background = '#F0F0F0'
 # sg.SetOptions(background_color=background, 
@@ -25,10 +26,12 @@ import PySimpleGUI as sg
 #     input_text_color ='Black',
 #     button_color = ('Black', 'gainsboro'))
 
+od, do = input("Zadejte rozsah řádků oddělený pomlčkou: ").split("-")
+od, do = 1, 2
 
-dfIn = pandas.read_excel("./uniqZdr.xlsx").reset_index().iloc[40:50]
+dfIn = pandas.read_excel("./uniqZdr.xlsx").reset_index().iloc[int(od)-1:int(do)]
 
-dfOut = pandas.DataFrame(columns=["o_Title","o_Author","Title", "Author", "Query","URLs", "Match", "Match_n"])
+dfOut = pandas.DataFrame(columns=["o_Title","o_Author","Title", "Author", "Query","URLs", "Match"])
 
 primSlozka = Path("C:/Users/Admin/Downloads")
 sekSlozka = Path("./downloaded")
@@ -42,8 +45,9 @@ pc.copy("0"); predtim = "0"
 for index, radek in dfIn.iterrows():
     
     autor = str(radek['Author']).replace(".", "")
-    auts = autor.split(";")[0].split(sep = ", ")
-    Auth = str(sorted(auts)[0])
+    auts_ = autor.split(";")
+    auts = [i.split(",") for i in auts_]
+    Auth = str(sorted(list(chain.from_iterable(auts)), reverse=True)[0])
     
     ttl = str(radek["Title"]).replace("[online", "")
     
@@ -53,13 +57,12 @@ for index, radek in dfIn.iterrows():
     if query not in querys:
         querys.append(query)
         kt.search(query)
-        
+    
+    
     pocitac = 0
     match = 0
-    # predtim = pc.paste() 
     lsrch = []
     indikace_schranky = 0
-    
     while True: #nyní stále kontroluj, uživatel vyhledává a stahuje ... 
         schranka = pc.paste()
         
@@ -73,33 +76,48 @@ for index, radek in dfIn.iterrows():
             if len(newFile) != 0:
                 cestaFile = list(newFile)[0]
             
-                layout = [[sg.Text(f"Ve schránce nová url adresa a zároveň se objevil nový PDF soubor v primární složce.\n\tNový soubor: {cestaFile.name}\n\n\tAktuální schránka: {schranka}\n")],[sg.Button('Jiný zajimavý zdroj', pad=((20,15),3)), sg.Button('Daný zdroj', pad=((20,15),3)), sg.Button("Dej další zdroj", pad=((20,15),3), button_color="red")]]
+                layout = [[sg.Text(f"Ve schránce nová url adresa a zároveň se objevil nový PDF soubor v primární složce.\n\tAktuální požadavek: {query}\n\n\tNový soubor: {cestaFile.name}\n\n\tAktuální schránka: {schranka}\n")],[[sg.Button('Jiný zajimavý zdroj', pad=((20,20),20)), sg.Button('Daný zdroj', pad=((20,20),20)), sg.Button("Daný zdroj\nDej další zdroj", pad=((20,20),20),button_color="red"), sg.Button("Jiný zajímavý zdroj\nDej další zdroj", pad=((20,20),20), button_color="purple")]]]
                 
-                event, other = sg.Window('Stahování zdrojů pd DP', layout, keep_on_top=True).read(close=True) 
+                # schranka = pc.paste() #joko možnost opravy v průběhu
                 
-                if event == "Dej další zdroj" or "":
+                event, other = sg.Window('Stahování zdrojů pro DP', layout, keep_on_top=True).read(close=True) 
+                
+                if event == "":
                     break 
-                elif event == "Další zajimavý zdroj":                    
+                elif event == "Jiný zajimavý zdroj":                    
                     pocitac += pocitac
-                    indikatorValidity = f"{pocitac} "
+                    indikatorValidity = f"_{pocitac}__"
                 elif event == "Daný zdroj":
                     pocitac += pocitac
-                    indikatorValidity += f"{pocitac} &&&_"
+                    indikatorValidity = f"_{pocitac}_&&&__"
                     match += 1
+                elif event == "Daný zdroj\nDej další zdroj":
+                    pocitac += pocitac
+                    indikatorValidity = f"_{pocitac}_&&&__"
+                    match += 1
+                elif event == "Jiný zajímavý zdroj\nDej další zdroj":
+                    pocitac += pocitac
+                    indikatorValidity = f"_{pocitac}__"                    
                 
-                if event in ["Jiný zajímavý zdroj", "Daný zdroj"]:      
+                if event != None:      
                     urls.append(schranka)
                     
                     cestaFile.rename(str(sekSlozka.absolute()) + "/" + query.replace(" pdf", indikatorValidity) + cestaFile.name)
+                    print("\tSoubor přesunut.")
                     
                     lsrch.append(schranka)
+                    
+                if event == "Daný zdroj\nDej další zdroj" or event == "Jiný zajímavý zdroj\nDej další zdroj":
+                    print("\tPřistupuji k dalšímu zdroji")
+                    break
 
 
     
     dfOut.loc[len(dfOut)] = [radek["Title"], radek['Author'], ttl, Auth, query, lsrch, match]
+
     indikace_schranky = 0
-    
-    input("\033[31m\tČekám na stisk klávesy abych mohl hledat další položku ve zdrojích...\033[0m") 
+
+dfOut.to_csv("./PruberStahovani.csv")
 
 
-
+#https://stackoverflow.com/questions/52675506/get-chrome-tab-url-in-python
