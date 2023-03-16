@@ -18,6 +18,9 @@ import pyautogui
 import keyboard
 
 
+import colorama
+colorama.init()
+
 
 
 # background = '#F0F0F0'
@@ -30,8 +33,8 @@ import keyboard
 #     input_text_color ='Black',
 #     button_color = ('Black', 'gainsboro'))
 
-# od, do = input("Zadejte rozsah řádků oddělený pomlčkou: ").split("-")
-od, do = 1, 2
+od, do = input("Zadejte rozsah řádků oddělený pomlčkou: ").split("-")
+# od, do = 1, 2
 
 dfIn = pandas.read_excel("./uniqZdr.xlsx").reset_index().iloc[int(od)-1:int(do)]
 
@@ -72,6 +75,10 @@ for index, radek in dfIn.iterrows():
         
         if indikace_schranky == 0:
             klavesa = keyboard.read_key()
+            if klavesa == "f5":
+                sg.popup_auto_close("Byla stisknuta klávesa F5.\n\nZdroj nenalezen, přistupuji k dalšímu.", background_color="darkgreen" ,auto_close_duration=2, keep_on_top=True)
+                break
+            
             if klavesa == "f6": 
                 pyautogui.hotkey('ctrl', 'c')    
             if predtim != schranka:
@@ -134,8 +141,9 @@ for index, radek in dfIn.iterrows():
 
     indikace_schranky = 0
 
-dfOut.to_csv("./PruberStahovani.csv")
+dfOut.to_csv("./PruberStahovani.csv", encoding="utf-8")
 print("Legitimní konec")
 
 #https://stackoverflow.com/questions/52675506/get-chrome-tab-url-in-python
 
+# https://stackoverflow.com/questions/71487463/why-cant-python-rich-print-text-styles-only-colors-on-windows-command-line
