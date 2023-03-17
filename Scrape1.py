@@ -18,8 +18,7 @@ import pyautogui
 import keyboard
 import time
 import csv
-import sys
-time.time()
+import re
 
 import colorama
 colorama.init()
@@ -36,6 +35,16 @@ colorama.init()
 #     input_text_color ='Black',
 #     button_color = ('Black', 'gainsboro'))
 
+# primSlozka = Path("C:/Users/Admin/Downloads")
+primSlozka = Path("C:/Users/Admin/Desktop/WebScr")
+sekSlozka = Path("./downloaded")
+sekSlozka.mkdir(parents=True, exist_ok=True)
+
+with open("querys.txt", "r", encoding="utf-8") as f:
+    querys = f.read().splitlines()
+
+print("zadaných querys bylo: ", len(querys))
+
 od, do = input("Zadejte rozsah řádků oddělený pomlčkou: ").split("-")
 # od, do = 1, 21-
 
@@ -43,9 +52,6 @@ dfIn = pandas.read_excel("./uniqZdr.xlsx").reset_index().iloc[int(od)-1:int(do)]
 
 dfOut = pandas.DataFrame(columns=["o_Title","o_Author","Title", "Author", "Query","URLs", "Match"])
 
-primSlozka = Path("C:/Users/Admin/Downloads")
-sekSlozka = Path("./downloaded")
-sekSlozka.mkdir(parents=True, exist_ok=True)
 veSlozce = set(sorted(primSlozka.glob("*.pdf"))) 
 
 urls = []; 
@@ -64,7 +70,7 @@ for index, radek in dfIn.iterrows():
     ttl = str(radek["Title"]).replace("[online", "")
     
     query = Auth + " " + ttl + " pdf"
-    print("\033[34m" + query + "\033[0m")
+    print("\033[91m" + query + "\033[0m")
     
     if query not in querys:
         querys.append(query)
@@ -81,7 +87,8 @@ for index, radek in dfIn.iterrows():
             if indikace_schranky == 0:
                 klavesa = keyboard.read_key()
                 if klavesa == "esc":
-                    sg.popup_auto_close("Byla stisknuta klávesa F5.\n\nZdroj nenalezen, přistupuji k dalšímu.", background_color="darkgreen" ,auto_close_duration=2, keep_on_top=True)
+                    print("Nenalezeno. Přistupuji k dalšímu zdroji")
+                    sg.popup_auto_close("Byla stisknuta klávesa F5.\n\nZdroj nenalezen, přistupuji k dalšímu.", background_color="darkgreen" ,auto_close_duration=1, keep_on_top=True)
                     break
                 elif klavesa == "f9": #pro researchgate ... kde nejde pdf otevřít jen ručně stáhnout
                     pyautogui.hotkey('f6')
@@ -89,6 +96,7 @@ for index, radek in dfIn.iterrows():
                     schranka = pc.paste()
                     indikace_schranky = 1
                 elif klavesa == "f8": 
+                    pyautogui.hotkey('f6')
                     pyautogui.hotkey('ctrl', 'c')    
                     schranka = pc.paste()
                 
@@ -97,9 +105,6 @@ for index, radek in dfIn.iterrows():
                         pyautogui.hotkey('ctrl', 's')#takže by mělo stačit jen zkopírovat F6; Ctrl + C 
                         pyautogui.click(100, 200) # stahovací okno musí mít určitou pozici
                         pyautogui.hotkey("enter") #na zavření dialogi stahování
-                        pyautogui.hotkey('ctrl', 'w'); time.sleep(1)
-                        pyautogui.click(0, 200) # na zavření tabu
-                        pyautogui.hotkey('ctrl', 'w') 
                         predtim = schranka
                         indikace_schranky = 1 
 
@@ -108,6 +113,7 @@ for index, radek in dfIn.iterrows():
                 newFile = veSlozce.symmetric_difference(veSlozce_actual)
                 if len(newFile) != 0:
                     cestaFile = list(newFile)[0]
+                    print(f"\t{cestaFile.name}")
                 
                     layout = [[sg.Text(f"Ve schránce nová url adresa a zároveň se objevil nový PDF soubor v primární složce.\n\tAktuální požadavek: {query}\n\n\tNový soubor: {cestaFile.name}\n\n\tAktuální schránka: {schranka}\n")],[[sg.Button('Jiný zajimavý zdroj', size = (15, 2), pad=((15,20),20)), sg.Button('Daný zdroj', size = (15, 2), pad=((15,20),20)), sg.Button("Daný zdroj\nDej další zdroj", size = (15, 2), pad=((15,20),20),button_color="red"), sg.Button("Jiný zajímavý zdroj\nDej další zdroj", size = (15, 2), pad=((15,20),20), button_color="purple")]]]
                     
@@ -134,18 +140,23 @@ for index, radek in dfIn.iterrows():
                     
                     if event != None:      
                         urls.append(schranka)
-                        
+                    
+                        nazevPresunu = re.sub("[:!?*;°/\\\\]","_",query).replace("pdf", "")
+                        print(f"\t{nazevPresunu}")
                         try:
-                            cestaFile.rename(str(sekSlozka.absolute()) + "/" + query.replace(" pdf", indikatorValidity) + cestaFile.name)
+                            cestaFile.rename(str(sekSlozka.absolute()) + "/" + nazevPresunu + cestaFile.name)
                             print("\tSoubor přesunut.")
                             lsrch.append(schranka)
                             indikace_schranky = 0
                         except:
                             FileExistsError
+                    
+                        pyautogui.click(100, 200) #na zavření tabu
+                        pyautogui.hotkey('ctrl', 'w'); time.sleep(1) 
                         
                                             
                     if event == "Daný zdroj\nDej další zdroj" or event == "Jiný zajímavý zdroj\nDej další zdroj":
-                        print("\tPřistupuji k dalšímu zdroji")
+                        print("Přistupuji k dalšímu zdroji")
                         break
 
 
