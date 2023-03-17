@@ -17,6 +17,9 @@ from itertools import chain
 import pyautogui
 import keyboard
 import time
+import csv
+import sys
+time.time()
 
 import colorama
 colorama.init()
@@ -45,7 +48,9 @@ sekSlozka = Path("./downloaded")
 sekSlozka.mkdir(parents=True, exist_ok=True)
 veSlozce = set(sorted(primSlozka.glob("*.pdf"))) 
 
-urls = []; querys = []
+urls = []; 
+with open("querys.txt", "r", encoding="utf-8") as f:
+    querys = f.read().splitlines()
 
 pc.copy("0"); predtim = "0"
 
@@ -63,87 +68,98 @@ for index, radek in dfIn.iterrows():
     
     if query not in querys:
         querys.append(query)
+        
         kt.search(query)
     
     
-    pocitac = 0
-    match = 0
-    lsrch = []
-    indikace_schranky = 0
-    while True: #nyní stále kontroluj, uživatel vyhledává a stahuje ... 
-        
-        if indikace_schranky == 0:
-            klavesa = keyboard.read_key()
-            if klavesa == "f5":
-                sg.popup_auto_close("Byla stisknuta klávesa F5.\n\nZdroj nenalezen, přistupuji k dalšímu.", background_color="darkgreen" ,auto_close_duration=2, keep_on_top=True)
-                break
+        pocitac = 0
+        match = 0
+        lsrch = []
+        indikace_schranky = 0
+        while True: #nyní stále kontroluj, uživatel vyhledává a stahuje ... 
             
-            if klavesa == "f6": 
-                pyautogui.hotkey('ctrl', 'c')    
-                schranka = pc.paste()
-            if predtim != schranka:
-                pyautogui.click(0, 200)
-                pyautogui.hotkey('ctrl', 's')#takže by mělo stačit jen zkopírovat F6; Ctrl + C 
-                pyautogui.click(100, 200) # stahovací okno musí mít určitou pozici
-                pyautogui.hotkey("enter") #na zavření dialogi stahování
-                pyautogui.hotkey('ctrl', 'w'); time.sleep(1)
-                pyautogui.click(0, 200) # na zavření tabu
-                pyautogui.hotkey('ctrl', 'w') 
-                predtim = schranka
-                indikace_schranky = 1 
-
-        elif indikace_schranky == 1:
-            veSlozce_actual = set(sorted(primSlozka.glob("*.pdf")))
-            newFile = veSlozce.symmetric_difference(veSlozce_actual)
-            if len(newFile) != 0:
-                cestaFile = list(newFile)[0]
-            
-                layout = [[sg.Text(f"Ve schránce nová url adresa a zároveň se objevil nový PDF soubor v primární složce.\n\tAktuální požadavek: {query}\n\n\tNový soubor: {cestaFile.name}\n\n\tAktuální schránka: {schranka}\n")],[[sg.Button('Jiný zajimavý zdroj', size = (15, 2), pad=((15,20),20)), sg.Button('Daný zdroj', size = (15, 2), pad=((15,20),20)), sg.Button("Daný zdroj\nDej další zdroj", size = (15, 2), pad=((15,20),20),button_color="red"), sg.Button("Jiný zajímavý zdroj\nDej další zdroj", size = (15, 2), pad=((15,20),20), button_color="purple")]]]
-                
-                # schranka = pc.paste() #joko možnost opravy v průběhu
-                
-                event, other = sg.Window('Stahování zdrojů pro DP', layout, keep_on_top=True).read(close=True) 
-                
-                if event == "":
-                    break 
-                elif event == "Jiný zajimavý zdroj":                    
-                    pocitac += pocitac
-                    indikatorValidity = f"_{pocitac}__"
-                elif event == "Daný zdroj":
-                    pocitac += pocitac
-                    indikatorValidity = f"_{pocitac}_&&&__"
-                    match += 1
-                elif event == "Daný zdroj\nDej další zdroj":
-                    pocitac += pocitac
-                    indikatorValidity = f"_{pocitac}_&&&__"
-                    match += 1
-                elif event == "Jiný zajímavý zdroj\nDej další zdroj":
-                    pocitac += pocitac
-                    indikatorValidity = f"_{pocitac}__"                    
-                
-                if event != None:      
-                    urls.append(schranka)
-                    
-                    try:
-                        cestaFile.rename(str(sekSlozka.absolute()) + "/" + query.replace(" pdf", indikatorValidity) + cestaFile.name)
-                        print("\tSoubor přesunut.")
-                        lsrch.append(schranka)
-                        indikace_schranky = 0
-                    except:
-                        FileExistsError
-                    
-                                        
-                if event == "Daný zdroj\nDej další zdroj" or event == "Jiný zajímavý zdroj\nDej další zdroj":
-                    print("\tPřistupuji k dalšímu zdroji")
+            if indikace_schranky == 0:
+                klavesa = keyboard.read_key()
+                if klavesa == "esc":
+                    sg.popup_auto_close("Byla stisknuta klávesa F5.\n\nZdroj nenalezen, přistupuji k dalšímu.", background_color="darkgreen" ,auto_close_duration=2, keep_on_top=True)
                     break
+                elif klavesa == "f9": #pro researchgate ... kde nejde pdf otevřít jen ručně stáhnout
+                    pyautogui.hotkey('f6')
+                    pyautogui.hotkey('ctrl', 'c')    
+                    schranka = pc.paste()
+                    indikace_schranky = 1
+                elif klavesa == "f8": 
+                    pyautogui.hotkey('ctrl', 'c')    
+                    schranka = pc.paste()
+                
+                    if predtim != schranka:
+                        pyautogui.click(0, 200)
+                        pyautogui.hotkey('ctrl', 's')#takže by mělo stačit jen zkopírovat F6; Ctrl + C 
+                        pyautogui.click(100, 200) # stahovací okno musí mít určitou pozici
+                        pyautogui.hotkey("enter") #na zavření dialogi stahování
+                        pyautogui.hotkey('ctrl', 'w'); time.sleep(1)
+                        pyautogui.click(0, 200) # na zavření tabu
+                        pyautogui.hotkey('ctrl', 'w') 
+                        predtim = schranka
+                        indikace_schranky = 1 
+
+            elif indikace_schranky == 1:
+                veSlozce_actual = set(sorted(primSlozka.glob("*.pdf")))
+                newFile = veSlozce.symmetric_difference(veSlozce_actual)
+                if len(newFile) != 0:
+                    cestaFile = list(newFile)[0]
+                
+                    layout = [[sg.Text(f"Ve schránce nová url adresa a zároveň se objevil nový PDF soubor v primární složce.\n\tAktuální požadavek: {query}\n\n\tNový soubor: {cestaFile.name}\n\n\tAktuální schránka: {schranka}\n")],[[sg.Button('Jiný zajimavý zdroj', size = (15, 2), pad=((15,20),20)), sg.Button('Daný zdroj', size = (15, 2), pad=((15,20),20)), sg.Button("Daný zdroj\nDej další zdroj", size = (15, 2), pad=((15,20),20),button_color="red"), sg.Button("Jiný zajímavý zdroj\nDej další zdroj", size = (15, 2), pad=((15,20),20), button_color="purple")]]]
+                    
+                    # schranka = pc.paste() #joko možnost opravy v průběhu
+                    
+                    event, other = sg.Window('Stahování zdrojů pro DP', layout, keep_on_top=True).read(close=True) 
+                    
+                    if event == "":
+                        break 
+                    elif event == "Jiný zajimavý zdroj":                    
+                        pocitac += pocitac
+                        indikatorValidity = f"_{pocitac}__"
+                    elif event == "Daný zdroj":
+                        pocitac += pocitac
+                        indikatorValidity = f"_{pocitac}_&&&__"
+                        match += 1
+                    elif event == "Daný zdroj\nDej další zdroj":
+                        pocitac += pocitac
+                        indikatorValidity = f"_{pocitac}_&&&__"
+                        match += 1
+                    elif event == "Jiný zajímavý zdroj\nDej další zdroj":
+                        pocitac += pocitac
+                        indikatorValidity = f"_{pocitac}__"                    
+                    
+                    if event != None:      
+                        urls.append(schranka)
+                        
+                        try:
+                            cestaFile.rename(str(sekSlozka.absolute()) + "/" + query.replace(" pdf", indikatorValidity) + cestaFile.name)
+                            print("\tSoubor přesunut.")
+                            lsrch.append(schranka)
+                            indikace_schranky = 0
+                        except:
+                            FileExistsError
+                        
+                                            
+                    if event == "Daný zdroj\nDej další zdroj" or event == "Jiný zajímavý zdroj\nDej další zdroj":
+                        print("\tPřistupuji k dalšímu zdroji")
+                        break
 
 
-    querys.append(query)
-    dfOut.loc[len(dfOut)] = [radek["Title"], radek['Author'], ttl, Auth, query, lsrch, match]
+        dfOut.loc[len(dfOut)] = [radek["Title"], radek['Author'], ttl, Auth, query, lsrch, match]
+        dfOut.to_csv("./PruberStahovanipandas.csv", encoding="utf-8")
+        
+        data =  [index+1 ,radek["Title"], radek['Author'], ttl, Auth, query, lsrch, match, time.time()]
+        with open("./PruberStahovani.csv", 'a', encoding="utf-8", newline='') as outfile:
+            writer = csv.writer(outfile)
+            writer.writerow(data)
+            
+        with open("querys.txt", "w", encoding="utf-8") as f:
+            f.writelines("\n".join(querys))
 
-    
-
-dfOut.to_csv("./PruberStahovani.csv", encoding="utf-8")
 print("Legitimní konec")
 
 #https://stackoverflow.com/questions/52675506/get-chrome-tab-url-in-python
