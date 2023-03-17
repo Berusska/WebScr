@@ -16,7 +16,7 @@ import PySimpleGUI as sg
 from itertools import chain
 import pyautogui
 import keyboard
-
+import time
 
 import colorama
 colorama.init()
@@ -34,7 +34,7 @@ colorama.init()
 #     button_color = ('Black', 'gainsboro'))
 
 od, do = input("Zadejte rozsah řádků oddělený pomlčkou: ").split("-")
-# od, do = 1, 2
+# od, do = 1, 21-
 
 dfIn = pandas.read_excel("./uniqZdr.xlsx").reset_index().iloc[int(od)-1:int(do)]
 
@@ -71,7 +71,6 @@ for index, radek in dfIn.iterrows():
     lsrch = []
     indikace_schranky = 0
     while True: #nyní stále kontroluj, uživatel vyhledává a stahuje ... 
-        schranka = pc.paste()
         
         if indikace_schranky == 0:
             klavesa = keyboard.read_key()
@@ -81,12 +80,14 @@ for index, radek in dfIn.iterrows():
             
             if klavesa == "f6": 
                 pyautogui.hotkey('ctrl', 'c')    
+                schranka = pc.paste()
             if predtim != schranka:
+                pyautogui.click(0, 200)
                 pyautogui.hotkey('ctrl', 's')#takže by mělo stačit jen zkopírovat F6; Ctrl + C 
                 pyautogui.click(100, 200) # stahovací okno musí mít určitou pozici
                 pyautogui.hotkey("enter") #na zavření dialogi stahování
-                pyautogui.hotkey('ctrl', 'w') 
-                pyautogui.hotkey("enter") #na zavření tabu
+                pyautogui.hotkey('ctrl', 'w'); time.sleep(1)
+                pyautogui.click(0, 200) # na zavření tabu
                 pyautogui.hotkey('ctrl', 'w') 
                 predtim = schranka
                 indikace_schranky = 1 
@@ -127,6 +128,7 @@ for index, radek in dfIn.iterrows():
                         cestaFile.rename(str(sekSlozka.absolute()) + "/" + query.replace(" pdf", indikatorValidity) + cestaFile.name)
                         print("\tSoubor přesunut.")
                         lsrch.append(schranka)
+                        indikace_schranky = 0
                     except:
                         FileExistsError
                     
@@ -136,10 +138,10 @@ for index, radek in dfIn.iterrows():
                     break
 
 
-    
+    querys.append(query)
     dfOut.loc[len(dfOut)] = [radek["Title"], radek['Author'], ttl, Auth, query, lsrch, match]
 
-    indikace_schranky = 0
+    
 
 dfOut.to_csv("./PruberStahovani.csv", encoding="utf-8")
 print("Legitimní konec")
